@@ -1,4 +1,5 @@
 #include <SPI.h>
+#include <string.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
@@ -24,8 +25,10 @@ float noteStatus1[] = {0,0,0,0,0,0,0};
 float noteStatus2[] = {0,0,0,0,0,0,0};
 float noteStatus3[] = {0,0,0,0,0,0,0};
 float noteArray[] = {G,F,E,D,C,B,A};
-float hertzArray[] = {392,349,330,294,262,247,220};
-
+float hertzArray[] = {196,185,165,147,131,123,110};
+float hertzArray0[] = {196,185,165,147,131,123,110};
+float hertzArray1[] = {392,349,330,294,262,247,220};
+float hertzArray2[] = {784,740,659,587,523,494,440};
 
 #define BLACK    0x0000
 #define BLUE     0x001F
@@ -45,7 +48,7 @@ const int DATA = 11;
 const int FSYNC0 = 10;                       // Standard SPI pins for the AD9833 waveform generator.
 const int FSYNC1 = 9;
 const int FSYNC2 = A4;
-
+int octaveSelect = A5;
 //SPI: 10 (SS), 11 (MOSI), 12 (MISO), 13 (SCK)
 const float refFreq = 25000000.0;
 int waveType = 0;
@@ -57,7 +60,7 @@ int j = 0;
 int osc0 = 0;
 int osc1 = 0;
 int osc2 = 0;
-
+int octave = 0;
 
 
 int used[] = {0,0,0};
@@ -76,6 +79,7 @@ pinMode(A6,OUTPUT);
 pinMode(FSYNC0,OUTPUT);
 pinMode(FSYNC1,OUTPUT);
 pinMode(FSYNC2,OUTPUT);
+pinMode(octaveSelect,INPUT);
 
 SPI.begin();
 delay(50); 
@@ -91,16 +95,19 @@ delay(50);
 }
 
 void loop() {
-  wave = analogRead(A7);
-  if(wave <= 50){
-    waveType = SQUARE;
-  }
-  else if(wave <= 250){
-    waveType = TRIANGLE;
-  }
-  else
-  waveType = SINE;
+  
+  
 
+  octave = analogRead(octaveSelect);
+  if(octave >= 500){
+    memcpy(hertzArray,hertzArray0,sizeof(hertzArray0));
+  }
+  else if(octave <= 499 && octave >= 250){
+    memcpy(hertzArray,hertzArray1,sizeof(hertzArray1));
+  }
+  else if(octave <= 249){
+    memcpy(hertzArray,hertzArray2,sizeof(hertzArray2));
+  }
  
   
   for(int i = 0; i < 7; i++){
@@ -126,6 +133,7 @@ void loop() {
           osc2 = i;
           used[2] = 1;
         }
+        waveType = SQUARE;
         AD9833setFrequency(hertzArray[i],waveType,selection);
         popScreen(hertzArray[i],waveType,selection);
       }
